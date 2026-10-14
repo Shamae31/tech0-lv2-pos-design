@@ -1,5 +1,12 @@
 import type { Member, Product, PurchaseQuote, PurchaseResult, Transaction } from './types';
-async function request<T>(path:string, options:RequestInit={}):Promise<T>{const response=await fetch(path,options);const body=await response.json();if(!response.ok)throw new Error(typeof body.detail==='string'?body.detail:'入力内容を確認してください');return body;}
+async function request<T>(path:string, options:RequestInit={}):Promise<T>{
+  const response=await fetch(path,options);
+  const contentType=response.headers.get('content-type')||'';
+  const body=contentType.includes('application/json')?await response.json():null;
+  if(!response.ok)throw new Error(body&&typeof body.detail==='string'?body.detail:'サーバーに接続できません。しばらくしてから再試行してください');
+  if(!body)throw new Error('サーバーから正しい応答がありません');
+  return body;
+}
 const auth=(token:string)=>({Authorization:`Bearer ${token}`});
 export const loginCashier=(cashier_id:string,password:string)=>request<{access_token:string;cashier:{display_name:string}}>('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cashier_id,password})});
 export const fetchMember=(token:string,id:string)=>request<Member>(`/api/members/${encodeURIComponent(id)}`,{headers:auth(token)});

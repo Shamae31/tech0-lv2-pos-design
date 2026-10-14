@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from threading import Lock
 
+import certifi
 from mysql.connector.pooling import MySQLConnectionPool
 
 _pool: MySQLConnectionPool | None = None
@@ -23,7 +24,7 @@ def connect():
                 ssl_disabled=False,
                 ssl_verify_cert=True,
                 ssl_verify_identity=True,
-                **({"ssl_ca": os.environ["MYSQL_SSL_CA"]} if os.getenv("MYSQL_SSL_CA") else {}),
+                ssl_ca=os.getenv("MYSQL_SSL_CA") or certifi.where(),
             )
     return _pool.get_connection()
 
